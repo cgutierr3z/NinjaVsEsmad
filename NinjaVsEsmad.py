@@ -1,13 +1,25 @@
-#Carlos Gutierrez
-#Computacion Grafica
-#Ingenieria de Sistemas y Computacion
-#2do Semestre de 2015
+#######################################################################
 
-import sys
+# This file is part of NinjaVsEsmad.
+
+# NinjaVsEsmad is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# NinjaVsEsmad is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with NinjaVsEsmad.  If not, see <http://www.gnu.org/licenses/>.
+
+#######################################################################
+
 import pygame
-import random
 from pygame.locals import *
-from math import *
+from spritesheet import SpriteSheet
 
 # Define the colors we will use in RGB format
 BLACK = (  0,   0,   0)
@@ -29,9 +41,15 @@ pygame.display.set_caption("NinjaVsEsmad")
 clock = pygame.time.Clock()
 
 class Ninja( pygame.sprite.Sprite ):
-
 	vel_x = 0
 	vel_y = 0
+
+	walking_frames_l = []
+	walking_frames_r = []
+
+	direction = "R"
+
+	nivel = None
 
 	def __init__(self):
 		pygame.sprite.Sprite.__init__(self)
@@ -44,11 +62,65 @@ class Ninja( pygame.sprite.Sprite ):
 		self.rect = self.image.get_rect()
 
 
+		sprite_sheet = SpriteSheet("img/ninja.png")
+		# Load all the right facing images into a list
+		image = sprite_sheet.get_image(0, 0, 66, 90)
+		self.walking_frames_r.append(image)
+		image = sprite_sheet.get_image(66, 0, 66, 90)
+		self.walking_frames_r.append(image)
+		image = sprite_sheet.get_image(132, 0, 67, 90)
+		self.walking_frames_r.append(image)
+		image = sprite_sheet.get_image(0, 93, 66, 90)
+		self.walking_frames_r.append(image)
+		image = sprite_sheet.get_image(66, 93, 66, 90)
+		self.walking_frames_r.append(image)
+		image = sprite_sheet.get_image(132, 93, 72, 90)
+		self.walking_frames_r.append(image)
+		image = sprite_sheet.get_image(0, 186, 70, 90)
+		self.walking_frames_r.append(image)
+
+		# Load all the right facing images, then flip them
+		# to face left.
+		image = sprite_sheet.get_image(0, 0, 66, 90)
+		image = pygame.transform.flip(image, True, False)
+		self.walking_frames_l.append(image)
+		image = sprite_sheet.get_image(66, 0, 66, 90)
+		image = pygame.transform.flip(image, True, False)
+		self.walking_frames_l.append(image)
+		image = sprite_sheet.get_image(132, 0, 67, 90)
+		image = pygame.transform.flip(image, True, False)
+		self.walking_frames_l.append(image)
+		image = sprite_sheet.get_image(0, 93, 66, 90)
+		image = pygame.transform.flip(image, True, False)
+		self.walking_frames_l.append(image)
+		image = sprite_sheet.get_image(66, 93, 66, 90)
+		image = pygame.transform.flip(image, True, False)
+		self.walking_frames_l.append(image)
+		image = sprite_sheet.get_image(132, 93, 72, 90)
+		image = pygame.transform.flip(image, True, False)
+		self.walking_frames_l.append(image)
+		image = sprite_sheet.get_image(0, 186, 70, 90)
+		image = pygame.transform.flip(image, True, False)
+		self.walking_frames_l.append(image)
+
+		# Set the image the player starts with
+		self.image = self.walking_frames_r[0]
+
+		# Set a referance to the image rect.
+		self.rect = self.image.get_rect()
+
 	def update(self):
 		self.calc_grav()
 
 		#mov izq der
 		self.rect.x += self.vel_x
+		pos = self.rect.x + self.nivel.mov_fondo
+		if self.direction == "R":
+			frame = (pos // 30) % len(self.walking_frames_r)
+			self.image = self.walking_frames_r[frame]
+		else:
+			frame = (pos // 30) % len(self.walking_frames_l)
+			self.image = self.walking_frames_l[frame]
 
 		#revisar colision
 		bloque_col_list = pygame.sprite.spritecollide(self, self.nivel.plataforma_lista, False)
@@ -59,9 +131,7 @@ class Ninja( pygame.sprite.Sprite ):
 				elif self.vel_x < 0:
 					self.rect.left = bloque.rect.right
 
-
-
-		#mover arriba y abajo
+		#mov arriba y abajo
 
 		self.rect.y += self.vel_y
 
@@ -101,9 +171,11 @@ class Ninja( pygame.sprite.Sprite ):
 
 	def ir_izq(self):
 		self.vel_x = -3
+		self.direction = "L"
 
 	def ir_der(self):
 		self.vel_x = 3
+		self.direction = "R"
 
 	def no_mover(self):
 		self.vel_x = 0
