@@ -19,7 +19,6 @@
 
 import pygame
 from pygame.locals import *
-from spritesheet import SpriteSheet
 
 # Define the colors we will use in RGB format
 BLACK = (  0,   0,   0)
@@ -40,73 +39,72 @@ screen =  pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption("NinjaVsEsmad")
 clock = pygame.time.Clock()
 
+
+class SpriteSheet(object):
+	sprite_sheet = None
+
+	def __init__(self, file_name):
+		self.sprite_sheet = pygame.image.load(file_name).convert()
+
+	def get_image(self, x, y, width, height):
+		image = pygame.Surface([width, height]).convert()
+		image.blit(self.sprite_sheet, (0, 0), (x, y, width, height))
+		image.set_colorkey(BLACK)
+
+		return image
+
 class Ninja( pygame.sprite.Sprite ):
 	vel_x = 0
 	vel_y = 0
 
-	walking_frames_l = []
-	walking_frames_r = []
+	frames_der = []
+	frames_izq = []
 
-	direction = "R"
-
+	direccion = "R"
 	nivel = None
 
 	def __init__(self):
 		pygame.sprite.Sprite.__init__(self)
-		ancho = 40
-		alto = 60
-
-		self.image = pygame.Surface([ancho,alto])
-		self.image.fill(RED)
-
-		self.rect = self.image.get_rect()
-
 
 		sprite_sheet = SpriteSheet("img/ninja.png")
-		# Load all the right facing images into a list
+
 		image = sprite_sheet.get_image(0, 0, 66, 90)
-		self.walking_frames_r.append(image)
+		self.frames_der.append(image)
+		image = pygame.transform.flip(image, True, False)
+		self.frames_izq.append(image)
+
 		image = sprite_sheet.get_image(66, 0, 66, 90)
-		self.walking_frames_r.append(image)
+		self.frames_der.append(image)
+		image = pygame.transform.flip(image, True, False)
+		self.frames_izq.append(image)
+
 		image = sprite_sheet.get_image(132, 0, 67, 90)
-		self.walking_frames_r.append(image)
+		self.frames_der.append(image)
+		image = pygame.transform.flip(image, True, False)
+		self.frames_izq.append(image)
+
 		image = sprite_sheet.get_image(0, 93, 66, 90)
-		self.walking_frames_r.append(image)
+		self.frames_der.append(image)
+		image = pygame.transform.flip(image, True, False)
+		self.frames_izq.append(image)
+
 		image = sprite_sheet.get_image(66, 93, 66, 90)
-		self.walking_frames_r.append(image)
+		self.frames_der.append(image)
+		image = pygame.transform.flip(image, True, False)
+		self.frames_izq.append(image)
+
 		image = sprite_sheet.get_image(132, 93, 72, 90)
-		self.walking_frames_r.append(image)
+		self.frames_der.append(image)
+		image = pygame.transform.flip(image, True, False)
+		self.frames_izq.append(image)
+
 		image = sprite_sheet.get_image(0, 186, 70, 90)
-		self.walking_frames_r.append(image)
+		self.frames_der.append(image)
+		image = pygame.transform.flip(image, True, False)
+		self.frames_izq.append(image)
 
-		# Load all the right facing images, then flip them
-		# to face left.
-		image = sprite_sheet.get_image(0, 0, 66, 90)
-		image = pygame.transform.flip(image, True, False)
-		self.walking_frames_l.append(image)
-		image = sprite_sheet.get_image(66, 0, 66, 90)
-		image = pygame.transform.flip(image, True, False)
-		self.walking_frames_l.append(image)
-		image = sprite_sheet.get_image(132, 0, 67, 90)
-		image = pygame.transform.flip(image, True, False)
-		self.walking_frames_l.append(image)
-		image = sprite_sheet.get_image(0, 93, 66, 90)
-		image = pygame.transform.flip(image, True, False)
-		self.walking_frames_l.append(image)
-		image = sprite_sheet.get_image(66, 93, 66, 90)
-		image = pygame.transform.flip(image, True, False)
-		self.walking_frames_l.append(image)
-		image = sprite_sheet.get_image(132, 93, 72, 90)
-		image = pygame.transform.flip(image, True, False)
-		self.walking_frames_l.append(image)
-		image = sprite_sheet.get_image(0, 186, 70, 90)
-		image = pygame.transform.flip(image, True, False)
-		self.walking_frames_l.append(image)
+		self.image = self.frames_der[0]
 
-		# Set the image the player starts with
-		self.image = self.walking_frames_r[0]
-
-		# Set a referance to the image rect.
 		self.rect = self.image.get_rect()
 
 	def update(self):
@@ -114,13 +112,13 @@ class Ninja( pygame.sprite.Sprite ):
 
 		#mov izq der
 		self.rect.x += self.vel_x
-		pos = self.rect.x + self.nivel.mov_fondo
-		if self.direction == "R":
-			frame = (pos // 30) % len(self.walking_frames_r)
-			self.image = self.walking_frames_r[frame]
+		pos_x = self.rect.x + self.nivel.mov_x
+		if self.direccion == "R":
+			frame = (pos_x // 15) % len(self.frames_der)
+			self.image = self.frames_der[frame]
 		else:
-			frame = (pos // 30) % len(self.walking_frames_l)
-			self.image = self.walking_frames_l[frame]
+			frame = (pos_x // 15) % len(self.frames_izq)
+			self.image = self.frames_izq[frame]
 
 		#revisar colision
 		bloque_col_list = pygame.sprite.spritecollide(self, self.nivel.plataforma_lista, False)
@@ -132,10 +130,9 @@ class Ninja( pygame.sprite.Sprite ):
 					self.rect.left = bloque.rect.right
 
 		#mov arriba y abajo
-
 		self.rect.y += self.vel_y
 
-		#se revisa el choque
+		#revisar colision
 		bloque_col_list = pygame.sprite.spritecollide(self,self.nivel.plataforma_lista,False)
 
 		for bloque in bloque_col_list:
@@ -145,7 +142,6 @@ class Ninja( pygame.sprite.Sprite ):
 					self.rect.top = bloque.rect.bottom
 
 				self.vel_y = 0
-
 
 	def calc_grav(self):
 		if self.vel_y == 0:
@@ -164,40 +160,99 @@ class Ninja( pygame.sprite.Sprite ):
 		self.rect.y -= 2
 
 		#si se puede salta
-
 		if len(plataforma_col_lista) > 0 or self.rect.bottom >= (SCREEN_HEIGHT - 70):
 			self.vel_y = -9
 			#self.vel_x = 6
 
 	def ir_izq(self):
 		self.vel_x = -3
-		self.direction = "L"
+		self.direccion = "L"
 
 	def ir_der(self):
 		self.vel_x = 3
-		self.direction = "R"
+		self.direccion = "R"
 
 	def no_mover(self):
 		self.vel_x = 0
 
+#MAPEO DE LAS PLATAFORMAS
+METAL_IZQ 	= (560, 70, 70, 40)
+METAL_MED	= (490, 140, 70, 40)
+METAL_DER	= (560, 140, 70, 70)
+
 class Plataforma(pygame.sprite.Sprite):
-	def __init__ (self, ancho, alto):
+	def __init__(self, sprite_data):
 		pygame.sprite.Sprite.__init__(self)
 
-		self.image = pygame.Surface([ancho,alto])
-		self.image.fill(GREEN)
+		sprite_sheet = SpriteSheet("img/sheet.png")
+		self.image = sprite_sheet.get_image(sprite_data[0],sprite_data[1],sprite_data[2],sprite_data[3])
 
 		self.rect = self.image.get_rect()
 
+class PlataformaMovil(Plataforma):
+	change_x = 0
+	change_y = 0
+
+	lim_top 	= 0
+	lim_bottom 	= 0
+	lim_left 	= 0
+	lim_right 	= 0
+
+	nivel = None
+	player = None
+
+	def update(self):
+		# Move left/right
+		self.rect.x += self.change_x
+
+		# See if we hit the player
+		hit = pygame.sprite.collide_rect(self, self.player)
+		if hit:
+			# We did hit the player. Shove the player around and
+			# assume he/she won't hit anything else.
+
+			# If we are moving right, set our right side
+			# to the left side of the item we hit
+			if self.change_x < 0:
+				self.player.rect.right = self.rect.left
+			else:
+				# Otherwise if we are moving left, do the opposite.
+				self.player.rect.left = self.rect.right
+
+		# Move up/down
+		self.rect.y += self.change_y
+
+		# Check and see if we the player
+		hit = pygame.sprite.collide_rect(self, self.player)
+		if hit:
+			# We did hit the player. Shove the player around and
+			# assume he/she won't hit anything else.
+
+			# Reset our position based on the top/bottom of the object.
+			if self.change_y < 0:
+				self.player.rect.bottom = self.rect.top
+			else:
+				self.player.rect.top = self.rect.bottom
+
+		# Check the boundaries and see if we need to reverse
+		# direction.
+		if self.rect.bottom > self.lim_bottom or self.rect.top < self.lim_top:
+			self.change_y *= -1
+
+		cur_pos = self.rect.x - self.nivel.mov_x
+		if cur_pos < self.lim_left or cur_pos > self.lim_right:
+			self.change_x *= -1
+
 class Nivel(object):
 	#lista sprite todos los niveles
-
 	plataforma_lista = None
 	enemigos_lista = None
 
 	fondo = None
-	mov_fondo = 0
-    #limite = -1000
+	mov_x = 0
+	mov_y = 0
+	limite_x = -1000
+	limite_y = -1000
 
 	def __init__(self,jugador):
 		self.plataforma_lista = pygame.sprite.Group()
@@ -210,40 +265,62 @@ class Nivel(object):
 
 	def draw(self, pantalla):
 		pantalla.fill(BLUE)
-		pantalla.blit(self.fondo,(self.mov_fondo // 2,0))
+		pantalla.blit(self.fondo, (self.mov_x // 2,self.mov_y // 2))
 
 		self.plataforma_lista.draw(pantalla)
 		self.enemigos_lista.draw(pantalla)
 
-	def Mover_fondo(self, mov_x):
-		self.mov_fondo += mov_x
+	def Mover_x(self, mov_xx):
+		self.mov_x += mov_xx
 
 		for platforma in self.plataforma_lista:
-			platforma.rect.x += mov_x
+			platforma.rect.x += mov_xx
 
 		for enemigos in self.enemigos_lista:
-			enemigos.rect.x += mov_x
+			enemigos.rect.x += mov_xx
+
+	def Mover_y(self, mov_yy):
+		self.mov_y += mov_yy
+
+		for platforma in self.plataforma_lista:
+			platforma.rect.y += mov_yy
+
+		for enemigos in self.enemigos_lista:
+			enemigos.rect.y += mov_yy
 
 class Nivel_01(Nivel):
 	def __init__(self, jugador):
 		Nivel.__init__(self, jugador)
 
 		self.fondo = pygame.image.load("img/NinjaVsEsmad_back01.png").convert()
-		self.limite = -4000
+		self.limite_x = -4000
+		self.limite_y = -1000
 
-		nivel = [ 	[50,100,100,500],[50,10,300,500],[50,100,500,500],[50,10,700,500],[50,200,850,350],[50,10,1000,500],
+		nivel = [	[METAL_IZQ, 800, 450],
+					[METAL_MED, 870, 450],
+					[METAL_DER, 940, 450]
 
-		[50,100,200,400],[50,100,600,400],
-
-		[50,10,300,300],[50,100,500,300],[50,10,700,300],
-		]
+					]
 
 		for plataforma in nivel:
-			bloque = Plataforma(plataforma[0], plataforma[1])
-			bloque.rect.x = plataforma[2]
-			bloque.rect.y = plataforma[3]
+			bloque = Plataforma(plataforma[0])
+			bloque.rect.x = plataforma[1]
+			bloque.rect.y = plataforma[2]
 			bloque.jugador = self.jugador
 			self.plataforma_lista.add(bloque)
+
+		block = PlataformaMovil(METAL_MED)
+		block.rect.x = 1100
+		block.rect.y = 450
+		block.lim_top = 100
+		block.lim_bottom = 450
+		block.change_y = 5
+		block.lim_left = 1100
+		block.lim_right = 1600
+		block.change_x = 5
+		block.player = self.jugador
+		block.nivel = self
+		self.plataforma_lista.add(block)
 
 
 class Nivel_02(Nivel):
@@ -251,44 +328,44 @@ class Nivel_02(Nivel):
 		Nivel.__init__(self,jugador)
 
 		self.fondo = pygame.image.load("img/NinjaVsEsmad_back01.png").convert()
-		self.limite = -6000
+		self.limite_x = -4000
+		self.limite_y = -1000
 
-		nivel = [ 	[50,10,100,300],[50,10,300,300],[50,10,500,300],[50,10,700,300],[50,10,900,300],[50,10,1100,300],
+		nivel = [	[METAL_IZQ, 800, 450],
+					[METAL_MED, 870, 450],
+					[METAL_DER, 940, 450]
 
-					[50,10,200,400],[50,10,600,400],
-
-					[50,10,300,500],[50,10,500,500],[50,10,700,500],
-				]
+					]
 
 		for plataforma in nivel:
-			bloque = Plataforma(plataforma[0], plataforma[1])
-			bloque.rect.x = plataforma[2]
-			bloque.rect.y = plataforma[3]
+			bloque = Plataforma(plataforma[0])
+			bloque.rect.x = plataforma[1]
+			bloque.rect.y = plataforma[2]
 			bloque.jugador = self.jugador
 			self.plataforma_lista.add(bloque)
 
 
 def texto(text, font, color = BLACK):
-	textSurface = font.render(text, True, color)
-	return textSurface, textSurface.get_rect()
+	txt = font.render(text, True, color)
+	return txt, txt.get_rect()
 
 def boton(msg,x,y,w,h,action=None):
 	mouse = pygame.mouse.get_pos()
 	click = pygame.mouse.get_pressed()
 
-	smallText = pygame.font.SysFont("impact",20)
+	font = pygame.font.SysFont("impact",20)
 
 	if x+w > mouse[0] > x and y+h > mouse[1] > y:
 		pygame.draw.rect(screen, BLACK,(x,y,w,h))
-		textSurf, textRect = texto(msg, smallText, WHITE)
+		txt, txtRect = texto(msg, font, WHITE)
 		if click[0] == 1 and action != None:
 			action()
 	else:
 		pygame.draw.rect(screen, WHITE,(x,y,w,h))
-		textSurf, textRect = texto(msg, smallText)
+		txt, txtRect = texto(msg, font)
 
-	textRect.center = ( (x+(w/2)), (y+(h/2)) )
-	screen.blit(textSurf, textRect)
+	txtRect.center = ( (x+(w/2)), (y+(h/2)) )
+	screen.blit(txt, txtRect)
 
 def salir():
 	pygame.quit()
@@ -296,16 +373,16 @@ def salir():
 
 def intro():
     listo = False
-    ver_inst = True
+    intro = True
     pag = 1
-    while listo == False and ver_inst:
+    while intro:
     	for event in pygame.event.get():
     		if event.type == pygame.QUIT:
-    			listo = True
+    			salir()
     		if event.type == pygame.MOUSEBUTTONDOWN:
     			pag += 1
     			if pag == 3:
-    				ver_inst = False
+    				intro = False
 
     	screen.fill(BLACK)
 
@@ -319,7 +396,6 @@ def intro():
 
     	pygame.display.update()
         clock.tick(20)
-
 
 def instrucciones():
 	instrucciones = True
@@ -385,8 +461,6 @@ def main():
 	nivel_lista = []
 	nivel_lista.append( Nivel_01(jugador) )
 	nivel_lista.append( Nivel_02(jugador) )
-	nivel_lista.append( Nivel_01(jugador) )
-
 
 	nivel_actual_no = 0
 	nivel_actual = nivel_lista[nivel_actual_no]
@@ -405,6 +479,7 @@ def main():
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				fin = True
+				salir()
 
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_LEFT:
@@ -427,18 +502,18 @@ def main():
 		if jugador.rect.right >= 400:
 			dif = jugador.rect.x - 400
 			jugador.rect.x = 400
-			nivel_actual.Mover_fondo(-dif)
+			nivel_actual.Mover_x(-dif)
 
 		#avanza a la izquierda
 		if jugador.rect.right <= 120:
 			dif = 120 - jugador.rect.x
 			jugador.rect.x = 120
-			nivel_actual.Mover_fondo(dif)
+			nivel_actual.Mover_x(dif)
 
 		#final del nivel
-		pos_actual = jugador.rect.x + nivel_actual.mov_fondo
-		print pos_actual
-		if (pos_actual < nivel_actual.limite):
+		pos_actual_x = jugador.rect.x + nivel_actual.mov_x
+		print pos_actual_x
+		if (pos_actual_x < nivel_actual.limite_x):
 			jugador.rect.x = 120
 			if (nivel_actual_no < len(nivel_lista)-1):
 				nivel_actual_no += 1
