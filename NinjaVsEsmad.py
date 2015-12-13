@@ -16,6 +16,7 @@ BLUE =  (  0,   0, 255)
 GREEN = (  0, 255,   0)
 RED =   (255,   0,   0)
 
+
 # Initialize the game engine
 pygame.init()
 
@@ -27,7 +28,7 @@ screen =  pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption("NinjaVsEsmad")
 clock = pygame.time.Clock()
 
-class Jugador( pygame.sprite.Sprite ):
+class Ninja( pygame.sprite.Sprite ):
 
 	vel_x = 0
 	vel_y = 0
@@ -195,49 +196,33 @@ class Nivel_02(Nivel):
 			self.plataforma_lista.add(bloque)
 
 
-def text_objects(text, font, color = BLACK):
-    textSurface = font.render(text, True, color)
-    return textSurface, textSurface.get_rect()
+def texto(text, font, color = BLACK):
+	textSurface = font.render(text, True, color)
+	return textSurface, textSurface.get_rect()
 
-def boton(msg,x,y,w,h,ic,ac,action=None):
-    mouse = pygame.mouse.get_pos()
-    click = pygame.mouse.get_pressed()
+def boton(msg,x,y,w,h,action=None):
+	mouse = pygame.mouse.get_pos()
+	click = pygame.mouse.get_pressed()
 
-    if x+w > mouse[0] > x and y+h > mouse[1] > y:
-        pygame.draw.rect(screen, ac,(x,y,w,h))
-        if click[0] == 1 and action != None:
-            action()
-    else:
-        pygame.draw.rect(screen, ic,(x,y,w,h))
+	smallText = pygame.font.SysFont("impact",20)
 
-    smallText = pygame.font.SysFont("comicsansms",20)
-    textSurf, textRect = text_objects(msg, smallText)
-    textRect.center = ( (x+(w/2)), (y+(h/2)) )
-    screen.blit(textSurf, textRect)
+	if x+w > mouse[0] > x and y+h > mouse[1] > y:
+		pygame.draw.rect(screen, BLACK,(x,y,w,h))
+		textSurf, textRect = texto(msg, smallText, WHITE)
+		if click[0] == 1 and action != None:
+			action()
+	else:
+		pygame.draw.rect(screen, WHITE,(x,y,w,h))
+		textSurf, textRect = texto(msg, smallText)
 
-def menu():
-    menu = True
-    while menu:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
+	textRect.center = ( (x+(w/2)), (y+(h/2)) )
+	screen.blit(textSurf, textRect)
 
-        screen.fill(WHITE)
-
-        largeText = pygame.font.SysFont("comicsansms",115)
-        TextSurf, TextRect = text_objects("A bit Racey", largeText)
-        TextRect.center = ((SCREEN_WIDHT/2),(SCREEN_HEIGHT/2))
-        screen.blit(TextSurf, TextRect)
-
-        boton("GO!",150,450,100,50,GREEN,RED,intro)
-        boton("Quit",550,450,100,50,RED,GREEN,main)
-
-        pygame.display.update()
-        clock.tick(15)
+def salir():
+	pygame.quit()
+	quit()
 
 def intro():
-    font = pygame.font.Font(None, 36)
     listo = False
     ver_inst = True
     pag = 1
@@ -253,18 +238,77 @@ def intro():
     	screen.fill(BLACK)
 
     	if pag == 1:
-    		image = pygame.image.load("img/intro.png")
+    		image = pygame.image.load("img/0_intro.png")
     		screen.blit(image,(0,0))
 
     	if pag == 2:
-    		texto = font.render("Pagina 2", True, WHITE)
-    		screen.blit(texto, (10,100))
+    		image = pygame.image.load("img/1_declaracion.png")
+    		screen.blit(image,(0,0))
 
     	pygame.display.update()
         clock.tick(20)
 
+
+def instrucciones():
+	instrucciones = True
+	while instrucciones:
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				pygame.quit()
+				quit()
+
+		screen.fill(WHITE)
+
+		image = pygame.image.load("img/3_instrucciones.png")
+		screen.blit(image,(0,0))
+
+		boton("Volver",300,520,200,50,menu)
+
+		pygame.display.update()
+		clock.tick(15)
+
+def creditos():
+	creditos = True
+	while creditos:
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				pygame.quit()
+				quit()
+
+		screen.fill(BLACK)
+
+		#image = pygame.image.load("img/3_instrucciones.png")
+		#screen.blit(image,(0,0))
+
+		boton("Volver",10,10,100,30,menu)
+
+		pygame.display.update()
+		clock.tick(15)
+
+def menu():
+	menu = True
+	while menu:
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				pygame.quit()
+				quit()
+
+		screen.fill(WHITE)
+
+		image = pygame.image.load("img/2_menu.png")
+		screen.blit(image,(0,0))
+
+		boton("Jugar",300,250,200,50,main)
+		boton("Instrucciones",300,310,200,50,instrucciones)
+		boton("Creditos",300,370,200,50,creditos)
+		boton("Salir",300,440,200,50,salir)
+
+		pygame.display.update()
+		clock.tick(15)
+
+
 def main():
-	jugador = Jugador()
+	jugador = Ninja()
 
 	nivel_lista = []
 	nivel_lista.append( Nivel_01(jugador) )
@@ -338,6 +382,6 @@ def main():
 		pygame.display.flip()
 
 if __name__ == "__main__":
-        #menu()
-        intro()
-    	main()
+		intro()
+		menu()
+		main()
