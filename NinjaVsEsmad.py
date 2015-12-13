@@ -18,6 +18,7 @@
 #######################################################################
 
 import pygame
+import random
 from pygame.locals import *
 
 # Define the colors we will use in RGB format
@@ -27,6 +28,7 @@ BLUE =  (  0,   0, 255)
 GREEN = (  0, 255,   0)
 RED =   (255,   0,   0)
 
+START, STOP = 0, 1
 
 # Initialize the game engine
 pygame.init()
@@ -39,6 +41,89 @@ screen =  pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption("NinjaVsEsmad")
 clock = pygame.time.Clock()
 
+activos_sp_lista = pygame.sprite.Group()
+
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super(Explosion, self).__init__()
+        sheet = pygame.image.load("img/explosion_strip16.png")
+        self.images = []
+        for i in range(0, 1536, 96):
+            rect = pygame.Rect((i, 0, 96, 96))
+            image = pygame.Surface(rect.size)
+            image.blit(sheet, (0, 0), rect)
+            image.set_colorkey(BLACK)
+            self.images.append(image)
+
+        self.image = self.images[0]
+        self.index = 0
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.add(activos_sp_lista)
+
+    def update(self):
+        self.image = self.images[self.index]
+        self.index += 1
+        if self.index >= len(self.images):
+            self.kill()
+
+class Humo(pygame.sprite.Sprite):
+	def __init__(self, x, y):
+		pygame.sprite.Sprite.__init__(self)
+		self.images = []
+		sprite_sheet = SpriteSheet("img/Smoke45Frames.png")
+
+		for j in range(0,6):
+			for k in range(0,5):
+				image = sprite_sheet.get_image(j*256, k*256, 256, 256)
+				self.images.append(image)
+
+		self.image = self.images[0]
+		self.index = 0
+		self.rect = self.image.get_rect()
+		self.rect.center = (x, y)
+		self.rect = self.image.get_rect()
+
+	def update(self):
+		self.image = self.images[self.index]
+		self.index += 1
+		if self.index >= len(self.images):
+			self.kill()
+
+class Bala2(pygame.sprite.Sprite):
+	def __init__(self, x, y):
+		super(Bala2, self).__init__()
+		self.image = pygame.Surface((10, 10))
+		for i in range(5, 0, -1):
+			color = 255.0 * float(i)/5
+			pygame.draw.circle(	self.image, BLACK, (5, 5), i, 0)
+		self.rect = self.image.get_rect()
+		self.rect.center = (x, y-25)
+
+	def update(self):
+		x, y = self.rect.center
+		x += 20
+		self.rect.center = x, y
+		if x >= SCREEN_WIDHT:
+			self.kill()
+
+class Bala( pygame.sprite.Sprite ):
+	def __init__(self, px, py, dxx = 0, dyy = 0 ):
+		pygame.sprite.Sprite.__init__(self)
+		self.image = pygame.image.load('img/bala_x.png').convert()
+		self.image.set_colorkey(BLACK)
+		self.rect = self.image.get_rect()
+		self.rect.center = (px - (self.rect.w/2), py - (self.rect.h/2))
+		self.dx = dxx
+		self.dy = dyy
+
+	def update(self):
+		x, y = self.rect.center
+		x += self.dx
+		y += self.dy
+		self.rect.center = x, y
+		if x >= SCREEN_WIDHT:
+			self.kill()
 
 class SpriteSheet(object):
 	sprite_sheet = None
@@ -104,11 +189,25 @@ class Ninja( pygame.sprite.Sprite ):
 		self.frames_izq.append(image)
 
 		self.image = self.frames_der[0]
-
 		self.rect = self.image.get_rect()
+		self.firing = self.shot = False
+		self.health = 100
+		self.ammo = 12
+		self.score = 0
 
 	def update(self):
 		self.calc_grav()
+		x, y = self.rect.center
+
+		if self.firing and self.ammo > 0:
+			self.shot = Bala(x+30, y+25, 5)
+			self.shot.add(self.nivel.disparos_lista)
+			self.shot.add(self.nivel.plataforma_lista)
+			self.ammo -= 1
+			self.firing = False
+
+		if self.health < 0:
+			self.kill()
 
 		#mov izq der
 		self.rect.x += self.vel_x
@@ -154,6 +253,12 @@ class Ninja( pygame.sprite.Sprite ):
 			self.vel_y = 0
 			self.rect.y = (SCREEN_HEIGHT - 70) - self.rect.height
 
+	def shoot(self, operation):
+		if operation == START:
+			self.firing = True
+		if operation == STOP:
+			self.firing = False
+
 	def salto(self):
 		self.rect.y += 2
 		plataforma_col_lista = pygame.sprite.spritecollide(self, self.nivel.plataforma_lista, False)
@@ -174,6 +279,127 @@ class Ninja( pygame.sprite.Sprite ):
 
 	def no_mover(self):
 		self.vel_x = 0
+
+	def kill(self):
+		pass
+
+class Esmad( pygame.sprite.Sprite ):
+	change_x = 0
+	change_y = 0
+
+	frames = []
+
+	lim_left = 0
+	lim_right = 0
+
+	player = None
+	nivel = None
+
+	def __init__(self):
+		pygame.sprite.Sprite.__init__(self)
+
+		sprite_sheet = SpriteSheet("img/esmad.png")
+
+		image = sprite_sheet.get_image(0, 0, 66, 90)
+		self.frames.append(image)
+
+		image = sprite_sheet.get_image(66, 0, 66, 90)
+		self.frames.append(image)
+
+		image = sprite_sheet.get_image(132, 0, 67, 90)
+		self.frames.append(image)
+
+		image = sprite_sheet.get_image(0, 93, 66, 90)
+		self.frames.append(image)
+
+		image = sprite_sheet.get_image(66, 93, 66, 90)
+		self.frames.append(image)
+
+		image = sprite_sheet.get_image(132, 93, 72, 90)
+		self.frames.append(image)
+
+		image = sprite_sheet.get_image(0, 186, 70, 90)
+		self.frames.append(image)
+
+		self.image = self.frames[0]
+
+		self.rect = self.image.get_rect()
+
+		self.explosion_sound = pygame.mixer.Sound("audio/Explosion.wav")
+  		self.explosion_sound.set_volume(0.4)
+
+	def update(self):
+		self.calc_grav()
+
+		#mov izq der
+		self.rect.x += self.change_x
+		pos_x = self.rect.x + self.nivel.mov_x
+
+		frame = (pos_x // 15) % len(self.frames)
+		self.image = self.frames[frame]
+
+		#colision con el jugador
+		hit = pygame.sprite.collide_rect(self, self.player)
+		if hit:
+			if self.change_x < 0:
+				self.player.rect.right = self.rect.left
+			else:
+				self.player.rect.left = self.rect.right
+
+		#colision con las plataformas
+		bloque_col_list = pygame.sprite.spritecollide(self, self.nivel.plataforma_lista, False)
+		for bloque in bloque_col_list:
+				if self.change_x > 0:
+					self.rect.right = bloque.rect.left
+				elif self.change_x < 0:
+					self.rect.left = bloque.rect.right
+
+		#mov arriba y abajo
+		self.rect.y += self.change_y
+
+		#colision con el jugador
+		hit = pygame.sprite.collide_rect(self, self.player)
+		if hit:
+			if self.change_y < 0:
+				self.player.rect.bottom = self.rect.top
+			else:
+				self.player.rect.top = self.rect.bottom
+
+		#colision con las plataformas
+		bloque_col_list = pygame.sprite.spritecollide(self, self.nivel.plataforma_lista, False)
+		for bloque in bloque_col_list:
+				if self.change_y > 0:
+					self.rect.bottom = bloque.rect.top
+				elif self.change_y < 0:
+					self.rect.top = bloque.rect.bottom
+
+				self.vel_y = 0
+
+		cur_pos = self.rect.x - self.nivel.mov_x
+		if cur_pos < self.lim_left or cur_pos > self.lim_right:
+			self.change_x *= -1
+
+	def calc_grav(self):
+		if self.change_y == 0:
+			self.change_y = 1
+		else:
+			self.change_y += 0.35
+
+		#esta en el suelo
+		if self.rect.y >= (SCREEN_HEIGHT - 70) - self.rect.height and self.change_y >= 0:
+			self.change_y = 0
+			self.rect.y = (SCREEN_HEIGHT - 70) - self.rect.height
+
+	def no_mover(self):
+		self.change_x = 0
+
+	def kill(self):
+		x, y = self.rect.center
+		if pygame.mixer.get_init():
+			self.explosion_sound.play(maxtime=1000)
+			Explosion(x, y)
+		super(Esmad, self).kill()
+
 
 #MAPEO DE LAS PLATAFORMAS
 METAL_IZQ 	= (560, 70, 70, 40)
@@ -205,37 +431,23 @@ class PlataformaMovil(Plataforma):
 		# Move left/right
 		self.rect.x += self.change_x
 
-		# See if we hit the player
 		hit = pygame.sprite.collide_rect(self, self.player)
 		if hit:
-			# We did hit the player. Shove the player around and
-			# assume he/she won't hit anything else.
-
-			# If we are moving right, set our right side
-			# to the left side of the item we hit
 			if self.change_x < 0:
 				self.player.rect.right = self.rect.left
 			else:
-				# Otherwise if we are moving left, do the opposite.
 				self.player.rect.left = self.rect.right
 
 		# Move up/down
 		self.rect.y += self.change_y
 
-		# Check and see if we the player
 		hit = pygame.sprite.collide_rect(self, self.player)
 		if hit:
-			# We did hit the player. Shove the player around and
-			# assume he/she won't hit anything else.
-
-			# Reset our position based on the top/bottom of the object.
 			if self.change_y < 0:
 				self.player.rect.bottom = self.rect.top
 			else:
 				self.player.rect.top = self.rect.bottom
 
-		# Check the boundaries and see if we need to reverse
-		# direction.
 		if self.rect.bottom > self.lim_bottom or self.rect.top < self.lim_top:
 			self.change_y *= -1
 
@@ -257,6 +469,7 @@ class Nivel(object):
 	def __init__(self,jugador):
 		self.plataforma_lista = pygame.sprite.Group()
 		self.enemigos_lista = pygame.sprite.Group()
+		self.disparos_lista = pygame.sprite.Group()
 		self.jugador = jugador
 
 	def update(self):
@@ -269,6 +482,7 @@ class Nivel(object):
 
 		self.plataforma_lista.draw(pantalla)
 		self.enemigos_lista.draw(pantalla)
+		self.disparos_lista.draw(pantalla)
 
 	def Mover_x(self, mov_xx):
 		self.mov_x += mov_xx
@@ -279,6 +493,9 @@ class Nivel(object):
 		for enemigos in self.enemigos_lista:
 			enemigos.rect.x += mov_xx
 
+		for disparos in self.disparos_lista:
+			disparos.rect.x += mov_xx
+
 	def Mover_y(self, mov_yy):
 		self.mov_y += mov_yy
 
@@ -287,6 +504,9 @@ class Nivel(object):
 
 		for enemigos in self.enemigos_lista:
 			enemigos.rect.y += mov_yy
+
+		for disparos in self.disparos_lista:
+			disparos.rect.y += mov_yy
 
 class Nivel_01(Nivel):
 	def __init__(self, jugador):
@@ -302,6 +522,20 @@ class Nivel_01(Nivel):
 
 					]
 
+		for i in range(2):
+			esmad = Esmad()
+			esmad.nivel = self
+			pos = random.randint(400, SCREEN_WIDHT+400)
+			#pos = random.randint(SCREEN_WIDHT, (self.limite_x*-1))
+			esmad.rect.x = pos
+			esmad.rect.y = (SCREEN_HEIGHT - 70) - jugador.rect.height
+			esmad.lim_left = pos - random.randint(0,200)
+			esmad.lim_right = pos + random.randint(0,200)
+			esmad.change_x = random.randint(1,3)
+			esmad.player = self.jugador
+			self.enemigos_lista.add(esmad)
+			self.plataforma_lista.add(esmad)
+
 		for plataforma in nivel:
 			bloque = Plataforma(plataforma[0])
 			bloque.rect.x = plataforma[1]
@@ -310,18 +544,14 @@ class Nivel_01(Nivel):
 			self.plataforma_lista.add(bloque)
 
 		block = PlataformaMovil(METAL_MED)
-		block.rect.x = 1100
-		block.rect.y = 450
+		block.rect.x = 1020
+		block.rect.y = 400
 		block.lim_top = 100
-		block.lim_bottom = 450
-		block.change_y = 5
-		block.lim_left = 1100
-		block.lim_right = 1600
-		block.change_x = 5
+		block.lim_bottom = 500
+		block.change_y = 2
 		block.player = self.jugador
 		block.nivel = self
 		self.plataforma_lista.add(block)
-
 
 class Nivel_02(Nivel):
 	def __init__(self,jugador):
@@ -343,7 +573,6 @@ class Nivel_02(Nivel):
 			bloque.rect.y = plataforma[2]
 			bloque.jugador = self.jugador
 			self.plataforma_lista.add(bloque)
-
 
 def texto(text, font, color = BLACK):
 	txt = font.render(text, True, color)
@@ -464,8 +693,7 @@ def main():
 
 	nivel_actual_no = 0
 	nivel_actual = nivel_lista[nivel_actual_no]
-
-	activos_sp_lista = pygame.sprite.Group()
+	
 	jugador.nivel = nivel_actual
 
 	jugador.rect.x = 340
@@ -482,21 +710,33 @@ def main():
 				salir()
 
 			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_LEFT:
+				if event.key == pygame.K_a:
 					jugador.ir_izq()
-				if event.key == pygame.K_RIGHT:
+				if event.key == pygame.K_d:
 					jugador.ir_der()
-				if event.key == pygame.K_UP:
+				if event.key == pygame.K_w:
 					jugador.salto()
+				if event.key == pygame.K_SPACE:
+					jugador.shoot(START)
 
 			if event.type == pygame.KEYUP:
-				if event.key == pygame.K_LEFT and jugador.vel_x < 0:
+				if event.key == pygame.K_a and jugador.vel_x < 0:
 					jugador.no_mover()
-				if event.key == pygame.K_RIGHT and jugador.vel_x > 0:
+				if event.key == pygame.K_d and jugador.vel_x > 0:
 					jugador.no_mover()
+				if event.key == pygame.K_SPACE:
+					jugador.shoot(STOP)
 
 		activos_sp_lista.update()
 		nivel_actual.update()
+
+		 # Check for successful attacks
+		hit_esmad = pygame.sprite.groupcollide(nivel_actual.enemigos_lista, nivel_actual.disparos_lista, True, True)
+		for k, v in hit_esmad.iteritems():
+			k.kill()
+			for i in v:
+				i.kill()
+				#jugador.score += 10
 
 		#avanza a la derecha
 		if jugador.rect.right >= 400:
@@ -512,7 +752,7 @@ def main():
 
 		#final del nivel
 		pos_actual_x = jugador.rect.x + nivel_actual.mov_x
-		print pos_actual_x
+		#print pos_actual_x
 		if (pos_actual_x < nivel_actual.limite_x):
 			jugador.rect.x = 120
 			if (nivel_actual_no < len(nivel_lista)-1):
