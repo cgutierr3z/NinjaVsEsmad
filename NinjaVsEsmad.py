@@ -258,7 +258,7 @@ class Ninja( pygame.sprite.Sprite ):
 		x, y = self.rect.center
 
 		if self.firing and self.ammo > 0:
-			self.shot = Bala(x+30, y+25, self.direccion, 5)
+			self.shot = Bala(x+30, y+25, self.direccion, 10)
 			self.shot.add(self.nivel.disparos_lista)
 			#self.shot.add(self.nivel.plataforma_lista)
 			self.ammo -= 1
@@ -641,7 +641,7 @@ class Nivel_01(Nivel):
 					[METAL_DER, 2490, 350],
 
 					[METAL_IZQ, 2630, 350],
-					[METAL_DER, 2700, 350],
+					[METAL_DER, 2700, 350]
 
 					
 					]
@@ -728,20 +728,20 @@ class Nivel_02(Nivel):
 
 		self.nivel_no = 2
 
-		for i in range(3):
-			esmad = Esmad()
-			esmad.nivel = self
-			#pos = random.randint(400, SCREEN_WIDHT)
-			posy = random.randint(SCREEN_HEIGHT, (self.limite_y*-1))
-			posx = random.randint(0, SCREEN_WIDHT)
-			esmad.rect.x = posx
-			esmad.rect.y = posy
-			esmad.lim_left = random.randint(0,posx)
-			esmad.lim_right = random.randint(posx,SCREEN_WIDHT)
-			esmad.change_x = random.randint(1,3)
-			esmad.change_y = 0
-			esmad.player = self.jugador
-			self.enemigos_lista.add(esmad)
+		# for i in range(3):
+		# 	esmad = Esmad()
+		# 	esmad.nivel = self
+		# 	#pos = random.randint(400, SCREEN_WIDHT)
+		# 	posy = random.randint(SCREEN_HEIGHT, (self.limite_y*-1))
+		# 	posx = random.randint(0, SCREEN_WIDHT)
+		# 	esmad.rect.x = posx
+		# 	esmad.rect.y = posy
+		# 	esmad.lim_left = random.randint(0,posx)
+		# 	esmad.lim_right = random.randint(posx,SCREEN_WIDHT)
+		# 	esmad.change_x = random.randint(1,3)
+		# 	esmad.change_y = 0
+		# 	esmad.player = self.jugador
+		# 	self.enemigos_lista.add(esmad)
 
 		nivel = [	[METAL_MED, 0, 530],
 					[METAL_MED, 70, 530],
@@ -768,10 +768,21 @@ class Nivel_02(Nivel):
 					[METAL_MED, 70, 1230],
 					[METAL_DER, 140, 1230],
 
-					[METAL_IZQ, 630, 1230],
+					[METAL_IZQ, 560, 1230],
+					[METAL_MED, 630, 1230],
 					[METAL_MED, 700, 1230],
 					[METAL_DER, 770, 1230],
 
+					[METAL_IZQ, 140, 1430],
+					[METAL_MED, 210, 1430],
+					[METAL_MED, 280, 1430],
+					[METAL_MED, 350, 1430],
+					[METAL_MED, 420, 1430],
+					[METAL_MED, 490, 1430],
+					[METAL_MED, 560, 1430],
+					[METAL_MED, 630, 1430],					
+					[METAL_MED, 700, 1430],
+					[METAL_MED, 770, 1430],
 
 					[METAL_MED, 0, 2750],
 					[METAL_MED, 70, 2750],
@@ -835,14 +846,20 @@ def salir():
 
 def unpause():
 	global pause
+	pygame.mixer.music.unpause()
 	pause = False
 
 def paused(score):
+	pygame.mixer.music.pause()
 	while pause:
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				pygame.quit()
 				quit()
+				
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_ESCAPE:
+					unpause()
 
 		screen.fill(WHITE)
 
@@ -991,10 +1008,17 @@ def main():
 	nivel_actual_no = 0
 	nivel_actual = nivel_lista[nivel_actual_no]
 
+	
+
 	jugador.nivel = nivel_actual
 	jugador.rect.x = 1000
 	jugador.rect.y = (SCREEN_HEIGHT - 70) - jugador.rect.height
 
+	
+	pygame.mixer.music.load('audio/Battle.ogg')
+	pygame.mixer.music.set_volume(0.4)
+	pygame.mixer.music.play(1)
+	
 	activos_sp_lista.add(jugador)
 	activos_sp_lista.add(puntaje)
 
@@ -1069,6 +1093,7 @@ def main():
 		
 		#control del nivel 1
 		if nivel_actual.nivel_no == 1:
+			
 			#avanza a la derecha
 			if jugador.rect.right >= 400:
 				dif = jugador.rect.x - 400
@@ -1083,7 +1108,7 @@ def main():
 
 			#final del nivel 1
 			pos_actual_x = jugador.rect.x + nivel_actual.mov_x
-			print pos_actual_x
+			#print pos_actual_x
 			if (pos_actual_x < nivel_actual.limite_x):
 				jugador.rect.x = 120
 				if (nivel_actual_no < len(nivel_lista)-1):
@@ -1145,6 +1170,6 @@ def main():
 		pygame.display.flip()
 
 if __name__ == "__main__":
-		#intro()
-		#menu()
+		intro()
+		menu()
 		main()
