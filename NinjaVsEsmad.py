@@ -401,7 +401,8 @@ class Esmad( pygame.sprite.Sprite ):
 		#colision con el jugador
 		hit = pygame.sprite.collide_rect(self, self.player)
 		if hit:
-			if self.change_x < 0:
+			#self.player.health -= 20 
+			if self.change_x > 0:
 				self.player.rect.right = self.rect.left
 			else:
 				self.player.rect.left = self.rect.right
@@ -420,7 +421,7 @@ class Esmad( pygame.sprite.Sprite ):
 		#colision con el jugador
 		hit = pygame.sprite.collide_rect(self, self.player)
 		if hit:
-			if self.change_y < 0:
+			if self.change_y > 0:
 				self.player.rect.bottom = self.rect.top
 			else:
 				self.player.rect.top = self.rect.bottom
@@ -726,7 +727,7 @@ class Nivel_02(Nivel):
 			bloque.jugador = self.jugador
 			self.plataforma_lista.add(bloque)
 
-		block = PlataformaMovil(METAL_DER)
+		block = PlataformaMovil(METAL_MED)
 		block.rect.x = 0
 		block.rect.y = 1030
 		block.lim_top = 730
@@ -968,10 +969,11 @@ def main():
 
 		hit_ninja = pygame.sprite.spritecollide(jugador, nivel_actual.bomba_lista, True)
 		for i in hit_ninja:
-			jugador.health -= 50
+			jugador.health -= 10
 
 		hit_ninja_esmad = pygame.sprite.spritecollide(jugador, nivel_actual.enemigos_lista, True)
 		for i in hit_ninja_esmad:
+			print "te toque cabron"
 			jugador.health -= 20
 
 		if jugador.health <= 0:
