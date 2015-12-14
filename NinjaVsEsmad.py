@@ -42,13 +42,13 @@ screen =  pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption("NinjaVsEsmad")
 clock = pygame.time.Clock()
 
-
 #audios
 you_lose 	= pygame.mixer.Sound('audio/Male/you_lose.ogg')
 game_over	= pygame.mixer.Sound('audio/Male/game_over.ogg')
 you_win 	= pygame.mixer.Sound('audio/Male/you_win.ogg')
 go_go_go 	= pygame.mixer.Sound('audio/Male/war_go_go_go.ogg')
 level_up	= pygame.mixer.Sound('audio/Male/level_up.ogg')
+congrats	= pygame.mixer.Sound('audio/Male/congratulations.ogg')
 pop_button	= pygame.mixer.Sound('audio/twoTone2.ogg')
 
 activos_sp_lista = pygame.sprite.Group()
@@ -728,20 +728,20 @@ class Nivel_02(Nivel):
 
 		self.nivel_no = 2
 
-		# for i in range(3):
-		# 	esmad = Esmad()
-		# 	esmad.nivel = self
-		# 	#pos = random.randint(400, SCREEN_WIDHT)
-		# 	posy = random.randint(SCREEN_HEIGHT, (self.limite_y*-1))
-		# 	posx = random.randint(0, SCREEN_WIDHT)
-		# 	esmad.rect.x = posx
-		# 	esmad.rect.y = posy
-		# 	esmad.lim_left = random.randint(0,posx)
-		# 	esmad.lim_right = random.randint(posx,SCREEN_WIDHT)
-		# 	esmad.change_x = random.randint(1,3)
-		# 	esmad.change_y = 0
-		# 	esmad.player = self.jugador
-		# 	self.enemigos_lista.add(esmad)
+		for i in range(4):
+			esmad = Esmad()
+			esmad.nivel = self
+			#pos = random.randint(400, SCREEN_WIDHT)
+			posy = random.randint(SCREEN_HEIGHT, (self.limite_y*-1))
+			posx = random.randint(0, SCREEN_WIDHT)
+			esmad.rect.x = posx
+			esmad.rect.y = posy
+			esmad.lim_left = random.randint(0,posx)
+			esmad.lim_right = random.randint(posx,SCREEN_WIDHT)
+			esmad.change_x = random.randint(1,3)
+			esmad.change_y = 0
+			esmad.player = self.jugador
+			self.enemigos_lista.add(esmad)
 
 		nivel = [	[METAL_MED, 0, 530],
 					[METAL_MED, 70, 530],
@@ -784,6 +784,20 @@ class Nivel_02(Nivel):
 					[METAL_MED, 700, 1430],
 					[METAL_MED, 770, 1430],
 
+					[METAL_MED, 0, 1630],
+					[METAL_MED, 70, 1630],
+					[METAL_DER, 140, 1630],					
+
+					[METAL_IZQ, 210, 1830],
+					[METAL_DER, 280, 1830],
+
+					[METAL_IZQ, 350, 1930],
+					[METAL_DER, 420, 1930],
+					
+					[METAL_IZQ, 630, 2030],
+					[METAL_MED, 700, 2030],
+					[METAL_MED, 770, 2030],
+					
 					[METAL_MED, 0, 2750],
 					[METAL_MED, 70, 2750],
 					[METAL_MED, 140, 2750],
@@ -805,16 +819,16 @@ class Nivel_02(Nivel):
 			bloque.jugador = self.jugador
 			self.plataforma_lista.add(bloque)
 
-		block = PlataformaMovil(METAL_MED)
-		block.rect.x = 400
-		block.rect.y = 200
-		block.lim_top = 200
-		block.lim_bottom = 450
-		block.change_y = 1
-		block.change_x = 0
-		block.player = self.jugador
-		block.nivel = self
-		self.plataforma_lista.add(block)
+		# block = PlataformaMovil(METAL_MED)
+		# block.rect.x = 400
+		# block.rect.y = 200
+		# block.lim_top = 200
+		# block.lim_bottom = 450
+		# block.change_y = 1
+		# block.change_x = 0
+		# block.player = self.jugador
+		# block.nivel = self
+		# self.plataforma_lista.add(block)
 
 def texto(text, font, color = BLACK):
 	txt = font.render(text, True, color)
@@ -856,7 +870,7 @@ def paused(score):
 			if event.type == pygame.QUIT:
 				pygame.quit()
 				quit()
-				
+
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_ESCAPE:
 					unpause()
@@ -879,7 +893,7 @@ def paused(score):
 		clock.tick(15)   
 
 def intro():
-    listo = False
+    #listo = False
     intro = True
     pag = 1
     while intro:
@@ -888,7 +902,7 @@ def intro():
     			salir()
     		if event.type == pygame.MOUSEBUTTONDOWN:
     			pag += 1
-    			if pag == 3:
+    			if pag == 4:
     				intro = False
 
     	screen.fill(BLACK)
@@ -899,6 +913,40 @@ def intro():
 
     	if pag == 2:
     		image = pygame.image.load("img/1_declaracion.png")
+    		screen.blit(image,(0,0))
+
+    	if pag == 3:
+    		image = pygame.image.load("img/1-1_historia.png")
+    		screen.blit(image,(0,0))
+
+    	pygame.display.update()
+        clock.tick(15)
+
+def final():
+    #listo = False
+    final = True
+    pag = 1
+    while final:
+    	for event in pygame.event.get():
+    		if event.type == pygame.QUIT:
+    			salir()
+    		if event.type == pygame.MOUSEBUTTONDOWN:
+    			pag += 1
+    			if pag == 4:
+    				final = False
+
+    	screen.fill(BLACK)
+
+    	if pag == 1:
+    		image = pygame.image.load("img/5_final.png")
+    		screen.blit(image,(0,0))
+
+    	if pag == 2:
+    		image = pygame.image.load("img/1_declaracion.png")
+    		screen.blit(image,(0,0))
+
+    	if pag == 3:
+    		image = pygame.image.load("img/4_creditos.png")
     		screen.blit(image,(0,0))
 
     	pygame.display.update()
@@ -967,6 +1015,8 @@ def end_game(score,msg):
 	if msg == "GAME OVER":
 		game_over.play()
 	if msg == "YOU WIN":
+		congrats.play()
+		final()
 		you_win.play()
 
 	while end_game:
@@ -1082,7 +1132,7 @@ def main():
 			end_game(prev_score,"GAME OVER")
 
 		#WINNER
-		if jugador.score >= 90:
+		if jugador.score >= 100:
 			prev_score = jugador.score
 			puntaje.kill()
 			jugador.kill()
@@ -1172,4 +1222,4 @@ def main():
 if __name__ == "__main__":
 		intro()
 		menu()
-		main()
+		#main()
