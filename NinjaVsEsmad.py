@@ -106,7 +106,8 @@ class Bala( pygame.sprite.Sprite ):
 		pygame.sprite.Sprite.__init__(self)
 		self.dx = dxx
 		self.dy = dyy
-		self.image = pygame.image.load('img/bala_x.png').convert()
+		self.image = pygame.image.load('img/star.png').convert_alpha()
+		self.image = pygame.transform.scale(self.image,(32,32))
 		if dir == "L":
 			self.image = pygame.transform.flip(self.image, True, False)
 			self.dx = self.dx *  -1
