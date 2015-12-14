@@ -1140,7 +1140,6 @@ def main():
 				i.kill()
 			end_game(prev_score,"YOU WIN")
 
-		
 		#control del nivel 1
 		if nivel_actual.nivel_no == 1:
 			
