@@ -152,7 +152,7 @@ class Bomba( pygame.sprite.Sprite ):
 		x, y = self.rect.center
 		if pygame.mixer.get_init():
 			self.explosion_sound.play(maxtime=1000)
-			Humo(x, y)
+			#Humo(x, y)
 		super(Bomba, self).kill()
 
 class SpriteSheet(object):
@@ -435,12 +435,12 @@ class Esmad( pygame.sprite.Sprite ):
 
 				self.vel_y = 0
 
-		cur_pos = self.rect.x + self.nivel.mov_x
+		cur_pos = self.rect.x - self.nivel.mov_x
 		if cur_pos < self.lim_left or cur_pos > self.lim_right:
 			self.change_x *= -1
 			self.ronda += 1
 			
-		if self.ronda == 200:
+		if self.ronda == 4:
 			self.firing = True
 			self.ronda = 0
 
@@ -629,9 +629,10 @@ class Nivel_01(Nivel):
 			pos = random.randint(SCREEN_WIDHT, (self.limite_x*-1))
 			esmad.rect.x = pos
 			esmad.rect.y = (SCREEN_HEIGHT - 70) - jugador.rect.height
-			esmad.lim_left = pos - random.randint(0,100)
-			esmad.lim_right = pos + random.randint(0,100)
+			esmad.lim_left = pos - random.randint(50,200)
+			esmad.lim_right = pos + random.randint(50,200)
 			esmad.change_x = random.randint(1,3)
+			esmad.change_y = 0
 			esmad.player = self.jugador
 			self.enemigos_lista.add(esmad)
 
@@ -666,12 +667,14 @@ class Nivel_02(Nivel):
 			esmad = Esmad()
 			esmad.nivel = self
 			#pos = random.randint(400, SCREEN_WIDHT)
-			pos = random.randint(SCREEN_HEIGHT, (self.limite_y*-1))
-			esmad.rect.x = random.randint(0, SCREEN_WIDHT)
-			esmad.rect.y = pos 
-			esmad.lim_left = pos - random.randint(0,200)
-			esmad.lim_right = pos + random.randint(0,200)
+			posy = random.randint(SCREEN_HEIGHT, (self.limite_y*-1))
+			posx = random.randint(0, SCREEN_WIDHT)
+			esmad.rect.x = posx
+			esmad.rect.y = posy
+			esmad.lim_left = posx - random.randint(50,200)
+			esmad.lim_right = posx + random.randint(50,200)
 			esmad.change_x = random.randint(1,3)
+			esmad.change_y = 0
 			esmad.player = self.jugador
 			self.enemigos_lista.add(esmad)
 
@@ -909,8 +912,8 @@ def main():
 	puntaje = ScoreBoard(jugador)
 
 	nivel_lista = []
-	nivel_lista.append( Nivel_02(jugador) )
 	nivel_lista.append( Nivel_01(jugador) )
+	nivel_lista.append( Nivel_02(jugador) )
 
 	nivel_actual_no = 0
 	nivel_actual = nivel_lista[nivel_actual_no]
