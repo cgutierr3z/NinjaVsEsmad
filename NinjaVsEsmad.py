@@ -41,6 +41,14 @@ screen =  pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption("NinjaVsEsmad")
 clock = pygame.time.Clock()
 
+
+#audios
+you_lose 	= pygame.mixer.Sound('audio/Male/you_lose.ogg')
+gameover	= pygame.mixer.Sound('audio/Male/game_over.ogg')
+you_win 	= pygame.mixer.Sound('audio/Male/you_win.ogg')
+go_go_go 	= pygame.mixer.Sound('audio/Male/war_go_go_go.ogg')
+level_up	= pygame.mixer.Sound('audio/Male/level_up.ogg')
+
 activos_sp_lista = pygame.sprite.Group()
 
 class Explosion(pygame.sprite.Sprite):
@@ -73,9 +81,9 @@ class Humo(pygame.sprite.Sprite):
 		self.images = []
 		sprite_sheet = SpriteSheet("img/Smoke45Frames.png")
 
-		for j in range(0,6):
-			for k in range(0,5):
-				image = sprite_sheet.get_image(j*256, k*256, 256, 256)
+		for j in range(0,5):
+			for k in range(0,6):
+				image = sprite_sheet.get_image(k*256, j*256, 256, 256)
 				self.images.append(image)
 
 		self.image = self.images[0]
@@ -83,6 +91,7 @@ class Humo(pygame.sprite.Sprite):
 		self.rect = self.image.get_rect()
 		self.rect.center = (x, y)
 		self.rect = self.image.get_rect()
+		#self.add(activos_sp_lista)
 
 	def update(self):
 		self.image = self.images[self.index]
@@ -90,32 +99,19 @@ class Humo(pygame.sprite.Sprite):
 		if self.index >= len(self.images):
 			self.kill()
 
-class Bala2(pygame.sprite.Sprite):
-	def __init__(self, x, y):
-		super(Bala2, self).__init__()
-		self.image = pygame.Surface((10, 10))
-		for i in range(5, 0, -1):
-			color = 255.0 * float(i)/5
-			pygame.draw.circle(	self.image, BLACK, (5, 5), i, 0)
-		self.rect = self.image.get_rect()
-		self.rect.center = (x, y-25)
-
-	def update(self):
-		x, y = self.rect.center
-		x += 20
-		self.rect.center = x, y
-		if x >= SCREEN_WIDHT:
-			self.kill()
-
 class Bala( pygame.sprite.Sprite ):
-	def __init__(self, px, py, dxx = 0, dyy = 0 ):
+	def __init__(self, px, py, dir, dxx = 0, dyy = 0 ):
 		pygame.sprite.Sprite.__init__(self)
+		self.dx = dxx
+		self.dy = dyy
 		self.image = pygame.image.load('img/bala_x.png').convert()
+		if dir == "L":
+			self.image = pygame.transform.flip(self.image, True, False)
+			self.dx = self.dx *  -1
 		self.image.set_colorkey(BLACK)
 		self.rect = self.image.get_rect()
 		self.rect.center = (px - (self.rect.w/2), py - (self.rect.h/2))
-		self.dx = dxx
-		self.dy = dyy
+		
 
 	def update(self):
 		x, y = self.rect.center
@@ -124,6 +120,38 @@ class Bala( pygame.sprite.Sprite ):
 		self.rect.center = x, y
 		if x >= SCREEN_WIDHT:
 			self.kill()
+
+class Bomba( pygame.sprite.Sprite ):
+
+	nivel = None
+
+	def __init__(self, px, py, dxx = 0, dyy = 0 ):
+		pygame.sprite.Sprite.__init__(self)
+		self.image = pygame.image.load("img/bomb.png").convert_alpha()
+		self.image = pygame.transform.scale(self.image,(32,32))
+		#self.image.set_colorkey(BLACK)
+		self.rect = self.image.get_rect()
+		self.rect.center = (px - (self.rect.w/2), py - (self.rect.h/2))
+		self.dx = dxx
+		self.dy = dyy
+
+		self.explosion_sound = pygame.mixer.Sound("audio/Shotgun.wav")
+  		self.explosion_sound.set_volume(0.4)
+
+	def update(self):
+		x, y = self.rect.center
+		x += self.dx
+		y += self.dy
+		self.rect.center = x, y
+		if y >= SCREEN_HEIGHT - 70:
+			self.kill()
+
+	def kill(self):
+		x, y = self.rect.center
+		if pygame.mixer.get_init():
+			self.explosion_sound.play(maxtime=1000)
+			Humo(x, y)
+		super(Bomba, self).kill()
 
 class SpriteSheet(object):
 	sprite_sheet = None
@@ -138,6 +166,32 @@ class SpriteSheet(object):
 
 		return image
 
+class ScoreBoard(pygame.sprite.Sprite):
+	def __init__(self, jugador):
+		super(ScoreBoard, self).__init__()
+		self.image = pygame.Surface((120, 120)).convert_alpha()
+		self.rect = self.image.get_rect()
+		self.rect.x = 10
+		self.rect.y = 10
+
+		self.font = pygame.font.SysFont("impact",20)
+
+		self.jugador = jugador
+
+	def update(self):
+		level = self.font.render("Nivel : {}".format(self.jugador.nivel.nivel_no), True, (150, 50, 50))
+		health = self.font.render("Salud : {}%".format(self.jugador.health), True, (150, 50, 50))
+		score = self.font.render("Puntos : {}".format(self.jugador.score), True, (150, 50, 50))
+		ammo = self.font.render("Balas : {}".format(self.jugador.ammo), True, (150, 50, 50))
+		self.image.fill(WHITE)
+		self.image.blit(level, (5, 2))
+		self.image.blit(health, (5, 32))
+		self.image.blit(score, (5, 62))
+		self.image.blit(ammo, (5, 92))
+
+	def kill(self):
+		super(ScoreBoard, self).kill()
+
 class Ninja( pygame.sprite.Sprite ):
 	vel_x = 0
 	vel_y = 0
@@ -147,6 +201,10 @@ class Ninja( pygame.sprite.Sprite ):
 
 	direccion = "R"
 	nivel = None
+
+	health = 100
+	ammo = 12
+	score = 0
 
 	def __init__(self):
 		pygame.sprite.Sprite.__init__(self)
@@ -191,18 +249,16 @@ class Ninja( pygame.sprite.Sprite ):
 		self.image = self.frames_der[0]
 		self.rect = self.image.get_rect()
 		self.firing = self.shot = False
-		self.health = 100
-		self.ammo = 12
-		self.score = 0
+		
 
 	def update(self):
 		self.calc_grav()
 		x, y = self.rect.center
 
 		if self.firing and self.ammo > 0:
-			self.shot = Bala(x+30, y+25, 5)
+			self.shot = Bala(x+30, y+25, self.direccion, 5)
 			self.shot.add(self.nivel.disparos_lista)
-			self.shot.add(self.nivel.plataforma_lista)
+			#self.shot.add(self.nivel.plataforma_lista)
 			self.ammo -= 1
 			self.firing = False
 
@@ -219,7 +275,7 @@ class Ninja( pygame.sprite.Sprite ):
 			frame = (pos_x // 15) % len(self.frames_izq)
 			self.image = self.frames_izq[frame]
 
-		#revisar colision
+		#colision con plataforma
 		bloque_col_list = pygame.sprite.spritecollide(self, self.nivel.plataforma_lista, False)
 
 		for bloque in bloque_col_list:
@@ -231,8 +287,8 @@ class Ninja( pygame.sprite.Sprite ):
 		#mov arriba y abajo
 		self.rect.y += self.vel_y
 
-		#revisar colision
-		bloque_col_list = pygame.sprite.spritecollide(self,self.nivel.plataforma_lista,False)
+		#colision con plataforma
+		bloque_col_list = pygame.sprite.spritecollide(self, self.nivel.plataforma_lista,False)
 
 		for bloque in bloque_col_list:
 				if self.vel_y > 0:
@@ -281,7 +337,8 @@ class Ninja( pygame.sprite.Sprite ):
 		self.vel_x = 0
 
 	def kill(self):
-		pass
+		super(Ninja, self).kill()
+
 
 class Esmad( pygame.sprite.Sprite ):
 	change_x = 0
@@ -327,6 +384,8 @@ class Esmad( pygame.sprite.Sprite ):
 
 		self.explosion_sound = pygame.mixer.Sound("audio/Explosion.wav")
   		self.explosion_sound.set_volume(0.4)
+  		self.firing = self.shot = False
+  		self.ronda = 0
 
 	def update(self):
 		self.calc_grav()
@@ -375,9 +434,24 @@ class Esmad( pygame.sprite.Sprite ):
 
 				self.vel_y = 0
 
-		cur_pos = self.rect.x - self.nivel.mov_x
+		cur_pos = self.rect.x + self.nivel.mov_x
 		if cur_pos < self.lim_left or cur_pos > self.lim_right:
 			self.change_x *= -1
+			self.ronda += 1
+			
+		if self.ronda == 200:
+			self.firing = True
+			self.ronda = 0
+
+		print self.ronda 
+		x, y = self.rect.center
+
+		if self.firing:
+			self.bomb = Bomba(x+30, y+25, -6, 1)
+			self.bomb.nivel = self.nivel
+			self.bomb.add(self.nivel.bomba_lista)
+			#self.puff.add(self.nivel.plataforma_lista)
+			self.firing = False
 
 	def calc_grav(self):
 		if self.change_y == 0:
@@ -459,6 +533,11 @@ class Nivel(object):
 	#lista sprite todos los niveles
 	plataforma_lista = None
 	enemigos_lista = None
+	disparos_lista = None
+	bomba_lista = None
+	humo_lista = None
+
+	nivel_no = None
 
 	fondo = None
 	mov_x = 0
@@ -470,11 +549,16 @@ class Nivel(object):
 		self.plataforma_lista = pygame.sprite.Group()
 		self.enemigos_lista = pygame.sprite.Group()
 		self.disparos_lista = pygame.sprite.Group()
+		self.bomba_lista = pygame.sprite.Group()
+		self.humo_lista = pygame.sprite.Group()
 		self.jugador = jugador
 
 	def update(self):
 		self.plataforma_lista.update()
 		self.enemigos_lista.update()
+		self.disparos_lista.update()
+		self.bomba_lista.update()
+		self.humo_lista.update()
 
 	def draw(self, pantalla):
 		pantalla.fill(BLUE)
@@ -483,6 +567,8 @@ class Nivel(object):
 		self.plataforma_lista.draw(pantalla)
 		self.enemigos_lista.draw(pantalla)
 		self.disparos_lista.draw(pantalla)
+		self.bomba_lista.draw(pantalla)
+		self.humo_lista.draw(pantalla)
 
 	def Mover_x(self, mov_xx):
 		self.mov_x += mov_xx
@@ -496,6 +582,12 @@ class Nivel(object):
 		for disparos in self.disparos_lista:
 			disparos.rect.x += mov_xx
 
+		for bomba in self.bomba_lista:
+			bomba.rect.x += mov_xx
+
+		for humo in self.humo_lista:
+			humo.rect.x += mov_xx
+
 	def Mover_y(self, mov_yy):
 		self.mov_y += mov_yy
 
@@ -508,6 +600,12 @@ class Nivel(object):
 		for disparos in self.disparos_lista:
 			disparos.rect.y += mov_yy
 
+		for bomba in self.bomba_lista:
+			bomba.rect.y += mov_yy
+
+		for humo in self.humo_lista:
+			humo.rect.y += mov_yy
+
 class Nivel_01(Nivel):
 	def __init__(self, jugador):
 		Nivel.__init__(self, jugador)
@@ -516,25 +614,27 @@ class Nivel_01(Nivel):
 		self.limite_x = -4000
 		self.limite_y = -1000
 
+		self.nivel_no = 1
+
 		nivel = [	[METAL_IZQ, 800, 450],
 					[METAL_MED, 870, 450],
 					[METAL_DER, 940, 450]
 
 					]
 
-		for i in range(2):
+		for i in range(6):
 			esmad = Esmad()
 			esmad.nivel = self
-			pos = random.randint(400, SCREEN_WIDHT+400)
-			#pos = random.randint(SCREEN_WIDHT, (self.limite_x*-1))
+			#pos = random.randint(400, SCREEN_WIDHT)
+			pos = random.randint(SCREEN_WIDHT, (self.limite_x*-1))
 			esmad.rect.x = pos
 			esmad.rect.y = (SCREEN_HEIGHT - 70) - jugador.rect.height
-			esmad.lim_left = pos - random.randint(0,200)
-			esmad.lim_right = pos + random.randint(0,200)
+			esmad.lim_left = pos - random.randint(0,100)
+			esmad.lim_right = pos + random.randint(0,100)
 			esmad.change_x = random.randint(1,3)
 			esmad.player = self.jugador
 			self.enemigos_lista.add(esmad)
-			self.plataforma_lista.add(esmad)
+			#self.plataforma_lista.add(esmad)
 
 		for plataforma in nivel:
 			bloque = Plataforma(plataforma[0])
@@ -560,6 +660,8 @@ class Nivel_02(Nivel):
 		self.fondo = pygame.image.load("img/NinjaVsEsmad_back01.png").convert()
 		self.limite_x = -4000
 		self.limite_y = -1000
+
+		self.nivel_no = 2
 
 		nivel = [	[METAL_IZQ, 800, 450],
 					[METAL_MED, 870, 450],
@@ -683,9 +785,34 @@ def menu():
 		pygame.display.update()
 		clock.tick(15)
 
+def game_over():
+	game_over = True
+	#you_lose.play()
+	gameover.play()
+	while game_over:
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				pygame.quit()
+				quit()
+
+		screen.fill(WHITE)
+
+		image = pygame.image.load("img/2_menu.png")
+		screen.blit(image,(0,0))
+
+		boton("Jugar de nuevo",300,250,200,50,main)
+		boton("Menu principal",300,310,200,50,menu)
+		boton("Salir",300,380,200,50,salir)
+
+		pygame.display.update()
+		clock.tick(15)
 
 def main():
 	jugador = Ninja()
+	jugador.health = 100
+	jugador.score = 0
+	jugador.ammo = 12
+	puntaje = ScoreBoard(jugador)
 
 	nivel_lista = []
 	nivel_lista.append( Nivel_01(jugador) )
@@ -693,15 +820,17 @@ def main():
 
 	nivel_actual_no = 0
 	nivel_actual = nivel_lista[nivel_actual_no]
-	
-	jugador.nivel = nivel_actual
 
+	jugador.nivel = nivel_actual
 	jugador.rect.x = 340
 	jugador.rect.y = (SCREEN_HEIGHT - 70) - jugador.rect.height
+
 	activos_sp_lista.add(jugador)
+	activos_sp_lista.add(puntaje)
 
 	fin = False
 	reloj = pygame.time.Clock()
+	go_go_go.play()
 
 	while not fin:
 		for event in pygame.event.get():
@@ -730,13 +859,28 @@ def main():
 		activos_sp_lista.update()
 		nivel_actual.update()
 
-		 # Check for successful attacks
 		hit_esmad = pygame.sprite.groupcollide(nivel_actual.enemigos_lista, nivel_actual.disparos_lista, True, True)
 		for k, v in hit_esmad.iteritems():
 			k.kill()
 			for i in v:
 				i.kill()
-				#jugador.score += 10
+				jugador.score += 10
+
+		# Check for impact
+		hit_ninja = pygame.sprite.spritecollide(jugador, nivel_actual.bomba_lista, True)
+		for i in hit_ninja:
+			jugador.health -= 50
+
+		hit_ninja_esmad = pygame.sprite.spritecollide(jugador, nivel_actual.enemigos_lista, True)
+		for i in hit_ninja_esmad:
+			jugador.health -= 20
+
+		if jugador.health <= 0:
+			puntaje.kill()
+			jugador.kill()
+			for i in nivel_actual.enemigos_lista:
+				i.kill()
+			game_over()
 
 		#avanza a la derecha
 		if jugador.rect.right >= 400:
@@ -756,9 +900,11 @@ def main():
 		if (pos_actual_x < nivel_actual.limite_x):
 			jugador.rect.x = 120
 			if (nivel_actual_no < len(nivel_lista)-1):
+				level_up.play()
 				nivel_actual_no += 1
 				nivel_actual = nivel_lista[nivel_actual_no]
 				jugador.nivel = nivel_actual
+				jugador.ammo = 12
 
 		if jugador.rect.left < 0:
 			jugador.rect.left = 0
