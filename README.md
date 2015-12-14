@@ -6,7 +6,7 @@ Proyecto final de Computacion Grafica. Ingenieria de Sistemas y Computacion. Uni
 ![menu](screenshots/menu_principal.png)
 ![gp1](screenshots/gameplay1.png)
 ![gp2](screenshots/gameplay2.png)
-![gp3](screenshots/gameplay2.png)
+![gp3](screenshots/gameplay3.png)
 ![pausa](screenshots/menu_pausa.png)
 ![gameover](screenshots/gameover.png)
 
